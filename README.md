@@ -81,25 +81,25 @@ String GroupID  = "__________";
 
    В `void setup()` нужно настроить скетч для верной работы бота.
 Используем эти команды:
-- `VKassistent.connectWIFI(SSID, PASSWORD);` — подключение к вашей сети WiFi.
-- `VKassistent.begin();` — запуск VK бота (инициализация LittleFS + Long Poll).
+- `bot.connectWIFI(SSID, PASSWORD);` — подключение к вашей сети WiFi.
+- `bot.begin();` — запуск VK бота (инициализация LittleFS + Long Poll).
 
 ``` cpp
 void setup() {
   Serial.begin(115200); // важно сделать именно эту частоту
 
-  VKassistent.connectWIFI(SSID, PASSWORD);  // Подключаем Wi-Fi
-  VKassistent.begin();                      // Запускаем бота
+  bot.connectWIFI(SSID, PASSWORD);  // Подключаем Wi-Fi
+  bot.begin();                      // Запускаем бота
   ...
 }
 ```
 
-   В `void loop()` обязательно должна быть команда `VKassistent.loop();`.
+   В `void loop()` обязательно должна быть команда `bot.loop();`.
 Она опрашивает VK через Long Poll и обрабатывает входящие сообщения.
 
 ``` cpp
 void loop() {
-  VKassistent.loop();
+  bot.loop();
 }
 ```
 
@@ -164,9 +164,9 @@ String menu = createKeyboard(
 Принимает два параметра: `long userId` и `String text`.
 
 ``` cpp
-VKassistent.processMessage("ВКЛЮЧИТЬ", [](long UserID, String text) {
+bot.processMessage("ВКЛЮЧИТЬ", [](long UserID, String text) {
   digitalWrite(LED_PIN, HIGH);
-  VKassistent.send(UserID, "🔛 Включено");
+  bot.send(UserID, "🔛 Включено");
 });
 ```
 
@@ -175,8 +175,8 @@ VKassistent.processMessage("ВКЛЮЧИТЬ", [](long UserID, String text) {
 Короткий вариант для простых команд.
 
 ``` cpp
-VKassistent.onMessage("СТАТУС", []() {
-  VKassistent.sendToLast("📊 Система работает");
+bot.onMessage("СТАТУС", []() {
+  bot.sendToLast("📊 Система работает");
 });
 ```
 
@@ -188,10 +188,10 @@ VKassistent.onMessage("СТАТУС", []() {
 Полный вариант — доступ к `peerId`, `fromId`, `attachments`.
 
 ``` cpp
-VKassistent.onMessage("ID", [](VKMessage& msg) {
+bot.onMessage("ID", [](VKMessage& msg) {
   String info = "Твой peerId: " + String(msg.peerId) +
                 "\nТвой fromId: " + String(msg.fromId);
-  VKassistent.send(msg.peerId, info);
+  bot.send(msg.peerId, info);
 });
 ```
 
@@ -209,42 +209,42 @@ VKassistent.onMessage("ID", [](VKMessage& msg) {
 ### Фото — onPhoto
 
 ``` cpp
-VKassistent.onPhoto([](VKMessage& msg) {
+bot.onPhoto([](VKMessage& msg) {
   if (!msg.hasPhoto()) return;
   String url = msg.getPhotoUrl();
   Serial.println("📸 Фото: " + url);
-  VKassistent.send(msg.peerId, "✅ Фото принято");
+  bot.send(msg.peerId, "✅ Фото принято");
 });
 ```
 
 ### Документ — onDoc
 
 ``` cpp
-VKassistent.onDoc([](VKMessage& msg) {
+bot.onDoc([](VKMessage& msg) {
   if (!msg.hasDoc()) return;
   String title = msg.getDocTitle();
   String url   = msg.getDocUrl();
   Serial.println("📄 Документ: " + title);
-  VKassistent.send(msg.peerId, "✅ Документ " + title + " принят");
+  bot.send(msg.peerId, "✅ Документ " + title + " принят");
 });
 ```
 
 ### Гео-метка — onGeo
 
 ``` cpp
-VKassistent.onGeo([](VKMessage& msg) {
+bot.onGeo([](VKMessage& msg) {
   float lat = msg.getLat();
   float lon = msg.getLon();
-  VKassistent.send(msg.peerId, "📍 " + String(lat, 6) + ", " + String(lon, 6));
+  bot.send(msg.peerId, "📍 " + String(lat, 6) + ", " + String(lon, 6));
 });
 ```
 
 ### Стикер — onSticker
 
 ``` cpp
-VKassistent.onSticker([](VKMessage& msg) {
+bot.onSticker([](VKMessage& msg) {
   int id = msg.attachments[0].id;
-  VKassistent.send(msg.peerId, "🎨 Стикер id: " + String(id));
+  bot.send(msg.peerId, "🎨 Стикер id: " + String(id));
 });
 ```
 
@@ -261,10 +261,10 @@ VKassistent.onSticker([](VKMessage& msg) {
 ### Сохранить фото из сообщения
 
 ``` cpp
-VKassistent.onPhoto([](VKMessage& msg) {
-  String path = VKassistent.savePhoto(msg);
+bot.onPhoto([](VKMessage& msg) {
+  String path = bot.savePhoto(msg);
   if (path != "") {
-    VKassistent.send(msg.peerId, "✅ Сохранено: " + path);
+    bot.send(msg.peerId, "✅ Сохранено: " + path);
   }
 });
 ```
@@ -272,16 +272,16 @@ VKassistent.onPhoto([](VKMessage& msg) {
 ### Сохранить фото и сразу ответить
 
 ``` cpp
-VKassistent.onPhoto([](VKMessage& msg) {
-  VKassistent.savePhotoAndReply(msg);
+bot.onPhoto([](VKMessage& msg) {
+  bot.savePhotoAndReply(msg);
 });
 ```
 
 ### Сохранить документ
 
 ``` cpp
-VKassistent.onDoc([](VKMessage& msg) {
-  VKassistent.saveDocAndReply(msg);
+bot.onDoc([](VKMessage& msg) {
+  bot.saveDocAndReply(msg);
 });
 ```
 
@@ -297,8 +297,8 @@ VKassistent.onDoc([](VKMessage& msg) {
 ### Отправить фото из LittleFS
 
 ``` cpp
-VKassistent.onMessage("отправь", [](VKMessage& msg) {
-  VKassistent.sendPhotoFromFS(msg.peerId, "📸 Вот фото:", LittleFS, "/photo.jpg");
+bot.onMessage("отправь", [](VKMessage& msg) {
+  bot.sendPhotoFromFS(msg.peerId, "📸 Вот фото:", LittleFS, "/photo.jpg");
 });
 ```
 
@@ -312,20 +312,20 @@ VKassistent.onMessage("отправь", [](VKMessage& msg) {
 ### Простое сообщение
 
 ``` cpp
-VKassistent.send(msg.peerId, "Hello_world!");
+bot.send(msg.peerId, "Hello_world!");
 ```
 
 ### Сообщение с клавиатурой
 
 ``` cpp
-VKassistent.sendWithKeyboard(msg.peerId, "Выбери действие:", menu);
+bot.sendWithKeyboard(msg.peerId, "Выбери действие:", menu);
 ```
 
 ### Гео-метка
 
 ``` cpp
-VKassistent.sendGeo(msg.peerId, 55.753994, 37.620446);
-VKassistent.sendGeo(msg.peerId, "📍 Красная площадь", 55.753994, 37.620446);
+bot.sendGeo(msg.peerId, 55.753994, 37.620446);
+bot.sendGeo(msg.peerId, "📍 Красная площадь", 55.753994, 37.620446);
 ```
 
 ## АДМИНЫ
@@ -446,34 +446,46 @@ void loop() {
 
 ## ЧЕК ЛИСТ
 
-В случае, если код не хочет работать, убедитесь в наличии этих пунктов:
+   Если код не хочет работать, пройдитесь по этому списку.
 
-1) Убедитесь, что в коде и настройках `Serial.begin()` значение стоит 115200.
-2) Название и пароль сети WiFi соответствуют реальным.
-3) Текст кнопки соответствует ожидаемому тексту в команде и наоборот.
-4) Плата подключена к компьютеру.
-5) Убедитесь, что вы подключаетесь к сети 2.4 ГГц.
-6) Убедитесь, что токен (Token) скопирован полностью и без лишних символов.
-7) Проверьте, что бот включён в настройках сообщества:
-   Управление → Сообщения → Сообщения сообщества → Включены.
-8) Проверьте, что Long Poll API включён:
-   Управление → Работа с API → Long Poll API → Включено.
-9) В разделе Long Poll API → Типы событий отметьте:
-   - ☑ Входящие сообщения
-10) Убедитесь, что вы подписаны на сообщество, где находится VK бот.
-11) При использовании внешнего питания — проверьте напряжение (5В).
-12) Убедитесь, что клавиатура создана через `createKeyboard()`.
-13) Проверьте, что в `void loop()` есть команда `VKassistent.loop();`.
-14) Если используете отправку фото — убедитесь, что у вас есть
-    **пользовательский токен** (не токен сообщества).
+### Серийный порт и питание
 
-Иногда может помочь перезагрузка кнопкой RESET (RST) на плате.
+- **`Serial.begin(115200)`** — убедитесь, что в коде и в мониторе
+  порта стоит **115200**.
+- **Плата подключена к компьютеру** — проверьте кабель и COM-порт.
+- **Внешнее питание** — если используете, проверьте напряжение (5В).
+- **RESET** — иногда помогает перезагрузка кнопкой **RST** на плате.
+
+### Wi-Fi
+
+- **SSID и пароль** — соответствуют реальной сети.
+- **Частота 2.4 ГГц** — ESP32 не работает на 5 ГГц.
+
+### Токен и сообщество
+
+- **Токен скопирован полностью** — без лишних пробелов и символов.
+- **Бот включён**: Управление → Сообщения → Сообщения сообщества →
+  Включены.
+- **Long Poll API включён**: Управление → Работа с API → Long Poll API →
+  Включено.
+- **Типы событий**: в Long Poll API → Типы событий → отмечено
+  **☑ Входящие сообщения**.
+- **Вы подписаны** на сообщество, где находится бот.
+
+### Код
+
+- **Клавиатура создана** через `createKeyboard()`.
+- **`bot.loop()`** вызывается в `void loop()`.
+- **Создание объекта**: `VKassistent bot(Token, GroupID);` — переменная
+  должна называться `bot`.
+- **Отправка фото**: если используете, убедитесь, что у вас есть
+  **пользовательский токен** (не токен сообщества).
 
 ## ЧАСТЫЕ ОШИБКИ
 
 ### Бот молчит, ничего не приходит
 
-- Проверьте права токена (пункт 6–8 чек-листа).
+- Проверьте права токена (см. ЧЕК ЛИСТ → Токен и сообщество).
 - Проверьте, что бот **включён** в настройках сообщества.
 - Проверьте, что вы **подписаны** на сообщество.
 
@@ -508,6 +520,12 @@ void loop() {
     return;
   }
   ```
+
+### Компиляция падает с «no member named...»
+
+- Проверьте, что объект называется **`bot`**, а не `VKassistent`.
+- Создание объекта должно быть: `VKassistent bot(Token, GroupID);`.
+- Все методы вызываются через `bot.` (например, `bot.send(...)`).
 
 ## КРАТКИЙ СПРАВОЧНИК ПО API
 
